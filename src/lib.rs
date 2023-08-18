@@ -17,12 +17,12 @@ pub struct PreviousError {
     pub error:    Box<dyn std::error::Error>,
 }
 
-/// Implementaion of PreviousError.
+/// Implementaion of [PreviousError].
 /// 
 /// It implements the following:
-/// - [new](PreviousError::new) - Constructor of PreviousError.
+/// - [new](PreviousError::new) - Constructor of [PreviousError].
 impl PreviousError {
-    /// This is the constructor of PreviousError.
+    /// This is the constructor of [PreviousError].
     /// 
     /// It takes a [function](PreviousError::function), [filename](PreviousError::filename), [line](PreviousError::line) and [error](PreviousError::error) and returns a [PreviousError].
     /// 
@@ -33,10 +33,10 @@ impl PreviousError {
     /// - ``error`` - The error that occured.
     /// 
     /// # Example
-    /// ```
+    /// ```rust
     /// let error = PreviousError::new("function", "filename", 1, Box::new(std::io::Error::new(std::io::ErrorKind::Other, "error")));
     /// ```
-    pub fn new(function: String, filename: String, line: u32, error: Box<dyn std::error::Error>) -> PreviousError {
+    fn new(function: String, filename: String, line: u32, error: Box<dyn std::error::Error>) -> PreviousError {
         PreviousError {function, filename, line, error}
     }
 }
@@ -79,10 +79,10 @@ impl PatchFileError {
     /// - ``error`` - The error that occured.
     /// 
     /// # Example
-    /// ```
+    /// ```rust
     /// let error = PatchFileError::new_convertion_error("function", "filename", 1, Box::new(std::io::Error::new(std::io::ErrorKind::Other, "error")));
     /// ```
-    pub fn new_convertion_error(function: &str, filename: &str, line: u32, error: Box<dyn std::error::Error>) -> PatchFileError {
+    fn new_convertion_error(function: &str, filename: &str, line: u32, error: Box<dyn std::error::Error>) -> PatchFileError {
         PatchFileError::ConvertionError(PreviousError::new(function.to_string(), filename.to_string(), line, error))
     }
 
@@ -97,15 +97,15 @@ impl PatchFileError {
     /// - ``error`` - The error that occured.
     /// 
     /// # Example
-    /// ```
+    /// ```rust
     /// let error = PatchFileError::new_read_error("function", "filename", 1, Box::new(std::io::Error::new(std::io::ErrorKind::Other, "error")));
     /// ```
-    pub fn new_read_error(function: &str, filename: &str, line: u32, error: Box<dyn std::error::Error>) -> PatchFileError {
+    fn new_read_error(function: &str, filename: &str, line: u32, error: Box<dyn std::error::Error>) -> PatchFileError {
         PatchFileError::ReadError(PreviousError::new(function.to_string(), filename.to_string(), line, error))
     }
 }
 
-/// Implement fmt::Debug trait for PatchFileError
+/// Implement [std::fmt::Debug] trait for [PatchFileError]
 impl std::fmt::Debug for PatchFileError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
@@ -116,7 +116,7 @@ impl std::fmt::Debug for PatchFileError {
     }
 }
 
-/// Implement PartialEq for PatchFileError
+/// Implement [PartialEq] for [PatchFileError]
 impl PartialEq for PatchFileError {
     fn eq(&self, other: &Self) -> bool {
         match self {
@@ -212,7 +212,7 @@ impl std::fmt::Debug for HexPatch {
 /// Target address is always 16 hex digits long, old value and new value are always 2 hex digits long.
 /// 
 /// Example:
-/// ```
+/// ```text
 /// >test.exe
 /// 0000000000AF0200:13->37
 /// 0000000000AF0206:37->37
@@ -243,7 +243,7 @@ impl F1337Patch {
     /// - [PatchFileError::WrongFormat] if the file is not in the right format.
     /// 
     /// # Example
-    /// ```
+    /// ```rust
     /// let patchfile = File::open("test.txt").unwrap();
     /// let patch = F1337Patch::new(&mut patchfile).unwrap();
     /// ```
@@ -257,7 +257,7 @@ impl F1337Patch {
     /// Target address is always 16 hex digits long, old value and new value are always 2 hex digits long.
     /// 
     /// ## Example:
-    /// ```
+    /// ```text
     /// >test.exe
     /// 0000000000AF0200:13->37
     /// 0000000000AF0206:37->37
@@ -285,10 +285,10 @@ impl F1337Patch {
                 Ok(patch) => patch,
                 Err(e) => return Err(e),
             };
-            println!("{:?}", &patch);
+            
             patches.push(patch);
         }
-
+        
         Ok(F1337Patch {
             target_filename,
             patches,
@@ -307,7 +307,7 @@ impl F1337Patch {
     /// - [PatchFileError::WrongFormat] if the line is not in the right format.
     /// 
     /// # Example
-    /// ```
+    /// ```rust
     /// let line = "0000000000AF0200:13->37".to_string();
     /// F1337Patch::check_patch_line_format(&line).unwrap();
     /// ```
@@ -349,7 +349,7 @@ impl F1337Patch {
     /// - [PatchFileError::WrongFormat] if the line is not in the right format.
     /// 
     /// # Example
-    /// ```
+    /// ```rust
     /// let line = "0000000000AF0200:13->37".to_string();
     /// let patch = F1337Patch::get_hex_patch_from_line(&line).unwrap();
     /// ```
@@ -358,24 +358,19 @@ impl F1337Patch {
             Ok(_) => (),
             Err(e) => return Err(e),
         }
-
         let address = match u64::from_str_radix(&line[0..16], 16) {
             Ok(address) => address,
             Err(e) => return Err(PatchFileError::new_convertion_error("F1337Patch::get_hex_patch_from_line", file!(), line!(), Box::new(e))),
         };
-        
         let old = match u8::from_str_radix(&line[17..19], 16) {
             Ok(old) => old,
             Err(_) => return Err(PatchFileError::WrongFormat),
         };
-        
         let new = match u8::from_str_radix(&line[21..23], 16) {
             Ok(new) => new,
             Err(_) => return Err(PatchFileError::WrongFormat),
         };
-        
-        println!("OK");
-        // This finally create the HexPatch struct.
+
         Ok(HexPatch::new(address, old, new))
     }
 
@@ -389,13 +384,8 @@ impl F1337Patch {
             return Err(PatchFileError::WrongFormat);
         }
         
-        // This gets the filename. Must exclude the newline character.
-        filename.push_str(&first_line[1..]);
-        
-        // Remove the trailing newline character.
-        if filename.ends_with('\n') {
-            filename.pop();
-        }
+        // This gets the filename. Trim the end to remove the \n (and \r\n on windows).
+        filename.push_str(&first_line[1..].trim_end());
         
         Ok(filename)
     }
