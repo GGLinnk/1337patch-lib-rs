@@ -1,65 +1,23 @@
 use std::fs::File;
 use std::io::{self, BufRead, Seek};
 
-/// This represents previous error encountered.
-/// 
-/// It is used to store the [function](PreviousError::function), [filename](PreviousError::filename), [line](PreviousError::line) and [error](PreviousError::error) of the previous error.
-/// 
-/// It is used in [PatchFileError] to store the previous error.
-pub struct PreviousError {
-    /// The function where the error occured.
-    pub function: String,
-    /// The filename where the error occured.
-    pub filename: String,
-    /// The line where the error occured.
-    pub line:     u32,
-    /// The error that occured. Can be any error that implements [std::error::Error]. Boxed.
-    pub error:    Box<dyn std::error::Error>,
-}
-
-/// Implementaion of [PreviousError].
-/// 
-/// It implements the following:
-/// - [new](PreviousError::new) - Constructor of [PreviousError].
-impl PreviousError {
-    /// This is the constructor of [PreviousError].
-    /// 
-    /// It takes a [function](PreviousError::function), [filename](PreviousError::filename), [line](PreviousError::line) and [error](PreviousError::error) and returns a [PreviousError].
-    /// 
-    /// # Arguments
-    /// - ``function`` - The function where the error occured.
-    /// - ``filename`` - The filename where the error occured.
-    /// - ``line`` - The line where the error occured.
-    /// - ``error`` - The error that occured.
-    /// 
-    /// # Example
-    /// ```rust
-    /// let error = PreviousError::new("function", "filename", 1, Box::new(std::io::Error::new(std::io::ErrorKind::Other, "error")));
-    /// ```
-    fn new(function: String, filename: String, line: u32, error: Box<dyn std::error::Error>) -> PreviousError {
-        PreviousError {function, filename, line, error}
-    }
-}
-
 /// Enum representing the different errors that can occur when reading a patch file.
 /// 
 /// See [Variants](#variants) for variants and their meaning.
-/// 
-/// [ConvertionError](PatchFileError::ConvertionError) and [ReadError](PatchFileError::ReadError) contain a [PreviousError] that contains the [function](PreviousError::function), [filename](PreviousError::filename), [line](PreviousError::line) and the previous [error](PreviousError::error) that occured.
 pub enum PatchFileError {
     /// When the radix or any other conversion fails.
     /// 
     /// Occurs if the values are not in hex.
     /// 
-    /// This encapsulates [std::num::ParseIntError](std::num::ParseIntError).
-    ConvertionError(PreviousError),
+    /// This encapsulates [std::num::ParseIntError].
+    ConvertionError(std::num::ParseIntError),
     /// When the file cannot be read.
     /// 
     /// Occurs if the file cannot be read.<br/>
     /// If this happens, the file is probably not accessible, does not exist or insufficient permissions is given to read the file.
     /// 
-    /// This encapsulates [std::io::Error](std::io::Error).
-    ReadError(PreviousError),
+    /// This encapsulates [std::io::Error].
+    ReadError(std::io::Error),
     /// When the file is not in the right format.
     /// 
     /// Occurs if the file is not in the right format.<br/>
@@ -67,50 +25,13 @@ pub enum PatchFileError {
     WrongFormat,
 }
 
-impl PatchFileError {
-    /// This is the constructor of [PatchFileError::ConvertionError]
-    /// 
-    /// It takes a [function](PreviousError::function), [filename](PreviousError::filename), [line](PreviousError::line) and [error](PreviousError::error) and returns a [PatchFileError::ConvertionError].
-    /// 
-    /// # Arguments
-    /// - ``function`` - The function where the error occured.
-    /// - ``filename`` - The filename where the error occured.
-    /// - ``line`` - The line where the error occured.
-    /// - ``error`` - The error that occured.
-    /// 
-    /// # Example
-    /// ```rust
-    /// let error = PatchFileError::new_convertion_error("function", "filename", 1, Box::new(std::io::Error::new(std::io::ErrorKind::Other, "error")));
-    /// ```
-    fn new_convertion_error(function: &str, filename: &str, line: u32, error: Box<dyn std::error::Error>) -> PatchFileError {
-        PatchFileError::ConvertionError(PreviousError::new(function.to_string(), filename.to_string(), line, error))
-    }
-
-    /// This is the constructor of [PatchFileError::ReadError]
-    /// 
-    /// It takes a [function](PreviousError::function), [filename](PreviousError::filename), [line](PreviousError::line) and [error](PreviousError::error) and returns a [PatchFileError::ReadError].
-    /// 
-    /// # Arguments
-    /// - ``function`` - The function where the error occured.
-    /// - ``filename`` - The filename where the error occured.
-    /// - ``line`` - The line where the error occured.
-    /// - ``error`` - The error that occured.
-    /// 
-    /// # Example
-    /// ```rust
-    /// let error = PatchFileError::new_read_error("function", "filename", 1, Box::new(std::io::Error::new(std::io::ErrorKind::Other, "error")));
-    /// ```
-    fn new_read_error(function: &str, filename: &str, line: u32, error: Box<dyn std::error::Error>) -> PatchFileError {
-        PatchFileError::ReadError(PreviousError::new(function.to_string(), filename.to_string(), line, error))
-    }
-}
-
 /// Implement [std::fmt::Debug] trait for [PatchFileError]
 impl std::fmt::Debug for PatchFileError {
+    /// This is the implementation of [std::fmt::Debug::fmt] for [PatchFileError].
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            PatchFileError::ConvertionError(e) => write!(f, "ConvertionError on {}:{} : {}", e.filename, e.line, e.error),
-            PatchFileError::ReadError(e) => write!(f, "ReadError on {}:{} : {}", e.filename, e.line, e.error),
+            PatchFileError::ConvertionError(e) => write!(f, "ConvertionError: {}", e),
+            PatchFileError::ReadError(e) => write!(f, "ReadError: {}", e),
             PatchFileError::WrongFormat => write!(f, "Error : WrongFormat"),
         }
     }
@@ -118,17 +39,18 @@ impl std::fmt::Debug for PatchFileError {
 
 /// Implement [PartialEq] for [PatchFileError]
 impl PartialEq for PatchFileError {
+    /// This is the implementation of [PartialEq::eq] for [PatchFileError].
     fn eq(&self, other: &Self) -> bool {
         match self {
             PatchFileError::ConvertionError(e) => {
                 match other {
-                    PatchFileError::ConvertionError(e2) => e.error.to_string() == e2.error.to_string(),
+                    PatchFileError::ConvertionError(e2) => e.kind() == e2.kind(),
                     _ => false,
                 }
             },
             PatchFileError::ReadError(e) => {
                 match other {
-                    PatchFileError::ReadError(e2) => e.error.to_string() == e2.error.to_string(),
+                    PatchFileError::ReadError(e2) => e.kind() == e2.kind(),
                     _ => false,
                 }
             },
@@ -142,6 +64,22 @@ impl PartialEq for PatchFileError {
     }
 }
 
+/// From [std::num::ParseIntError] to [PatchFileError]
+impl From<std::num::ParseIntError> for PatchFileError {
+    /// This is the implementation for [std::num::ParseIntError] to [PatchFileError] conversion.
+    fn from(error: std::num::ParseIntError) -> Self {
+        PatchFileError::ConvertionError(error)
+    }
+}
+
+/// From [std::io::Error] to [PatchFileError]
+impl From<std::io::Error> for PatchFileError {
+    /// This is the implementation for [std::io::Error] to [PatchFileError] conversion.
+    fn from(error: std::io::Error) -> Self {
+        PatchFileError::ReadError(error)
+    }
+}
+
 /// This is used to create representation of a patch.
 /// 
 /// A patch is in the following format:<br/>
@@ -152,6 +90,7 @@ impl PartialEq for PatchFileError {
 /// ```
 /// 0000000000AF0200:13->37
 /// ```
+#[derive(Debug)]
 pub struct HexPatch {
     /// Target address of the patch.
     pub target_address: u64,
@@ -185,19 +124,13 @@ impl HexPatch {
     }
 }
 
-/// Implement PartialEq for HexPatch
+/// Implement [PartialEq] for [HexPatch]
 impl PartialEq for HexPatch {
+    /// This is the implementation of [PartialEq::eq] for [HexPatch].
     fn eq(&self, other: &Self) -> bool {
         self.target_address == other.target_address &&
         self.old == other.old &&
         self.new == other.new
-    }
-}
-
-/// Implement Debug trait for HexPatch
-impl std::fmt::Debug for HexPatch {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{:016X}:{:02X}->{:02X}", self.target_address, self.old, self.new)
     }
 }
 
@@ -219,6 +152,7 @@ impl std::fmt::Debug for HexPatch {
 /// ```
 /// 
 /// Patches are stored in a vector of [HexPatch].
+#[derive(Debug)]
 pub struct F1337Patch {
     /// Target file name. Extracted from the first line of the patch file.
     pub target_filename: String,
@@ -238,8 +172,8 @@ impl F1337Patch {
     /// - [Result] of [F1337Patch] or [PatchFileError].
     /// 
     /// # Errors
-    /// - [PatchFileError::ConvertionError] if the file contains invalid hex values. Contains [PreviousError].
-    /// - [PatchFileError::ReadError] if the file can't be read. Contains [PreviousError].
+    /// - [PatchFileError::ConvertionError] if the file contains invalid hex values. Contains [std::num::ParseIntError].
+    /// - [PatchFileError::ReadError] if the file can't be read. Contains [std::io::Error].
     /// - [PatchFileError::WrongFormat] if the file is not in the right format.
     /// 
     /// # Example
@@ -268,23 +202,14 @@ impl F1337Patch {
         let mut first_line = String::new();
         let first_line_size = match bufreader.read_line(&mut first_line) {
             Ok(size) => size,
-            Err(e) => return Err(PatchFileError::new_read_error("F1337Patch::new", file!(), line!(), Box::new(e))),
+            Err(e) => return Err(PatchFileError::ReadError(e)),
         };
-        let target_filename = match Self::get_filename(first_line, first_line_size) {
-            Ok(filename) => filename,
-            Err(e) => return Err(e),
-        };
+        let target_filename = Self::get_filename(first_line, first_line_size)?;
         let mut patches = Vec::new();
         
         for line in bufreader.lines() {
-            let line = match line {
-                Ok(line) => line,
-                Err(e) => return Err(PatchFileError::new_read_error("F1337Patch::new", file!(), line!(), Box::new(e))),
-            };
-            let patch = match Self::get_hex_patch_from_line(&line) {
-                Ok(patch) => patch,
-                Err(e) => return Err(e),
-            };
+            let line = line?;
+            let patch = Self::get_hex_patch_from_line(&line)?;
             
             patches.push(patch);
         }
@@ -345,7 +270,7 @@ impl F1337Patch {
     /// - [Result] of [HexPatch] or [PatchFileError].
     /// 
     /// # Errors
-    /// - [PatchFileError::ConvertionError] if the file contains invalid hex values. Contains [PreviousError].
+    /// - [PatchFileError::ConvertionError] if the file contains invalid hex values. Contains [std::num::ParseIntError].
     /// - [PatchFileError::WrongFormat] if the line is not in the right format.
     /// 
     /// # Example
@@ -354,22 +279,11 @@ impl F1337Patch {
     /// let patch = F1337Patch::get_hex_patch_from_line(&line).unwrap();
     /// ```
     fn get_hex_patch_from_line(line: &String) -> Result<HexPatch, PatchFileError> {
-        match Self::check_patch_line_format(line) {
-            Ok(_) => (),
-            Err(e) => return Err(e),
-        }
-        let address = match u64::from_str_radix(&line[0..16], 16) {
-            Ok(address) => address,
-            Err(e) => return Err(PatchFileError::new_convertion_error("F1337Patch::get_hex_patch_from_line", file!(), line!(), Box::new(e))),
-        };
-        let old = match u8::from_str_radix(&line[17..19], 16) {
-            Ok(old) => old,
-            Err(_) => return Err(PatchFileError::WrongFormat),
-        };
-        let new = match u8::from_str_radix(&line[21..23], 16) {
-            Ok(new) => new,
-            Err(_) => return Err(PatchFileError::WrongFormat),
-        };
+        Self::check_patch_line_format(line)?;
+
+        let address = u64::from_str_radix(&line[0..16], 16)?;
+        let old = u8::from_str_radix(&line[17..19], 16)?;
+        let new = u8::from_str_radix(&line[21..23], 16)?;
 
         Ok(HexPatch::new(address, old, new))
     }
@@ -388,17 +302,6 @@ impl F1337Patch {
         filename.push_str(&first_line[1..].trim_end());
         
         Ok(filename)
-    }
-}
-
-
-/// Implements [std::fmt::Debug] for [F1337Patch].
-impl std::fmt::Debug for F1337Patch {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("F1337Patch")
-            .field("target_filename", &self.target_filename)
-            .field("patches", &self.patches)
-            .finish()
     }
 }
 

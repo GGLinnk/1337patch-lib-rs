@@ -8,7 +8,7 @@ readme = "README.md"
 keywords = ["1337patch", "library", "parser"]
 categories = ["parser-implementations", "data-structures", "encoding"]
 publish = true
-version = "0.1.2"
+version = "0.1.3"
 edition = "2021"
 
 [dev-dependencies]
