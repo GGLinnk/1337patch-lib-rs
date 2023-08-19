@@ -1,0 +1,49 @@
+name: Bug report
+description: 'Please take time to fill this form for a better '
+title: '[Bug]: '
+labels:
+  - bug
+body:
+  - type: checkboxes
+    id: searched
+    attributes:
+      label: Is there an existing issue for this?
+      description: >-
+        Please search to see if an issue already exists for the bug you
+        encountered.
+      options:
+        - label: I haved searched
+          required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear and concise description of the problem
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal Reproduction
+      description: Provide steps to reproduce the problem
+    validations:
+      required: true
+  - type: textarea
+    id: exception
+    attributes:
+      label: Exception or Error
+      description: Provide error logs
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: What OS are you running ?
+      options:
+        - Windows
+        - Linux
+        - MacOS
+        - Embeded
+        - Others
+    validations:
+      required: true
