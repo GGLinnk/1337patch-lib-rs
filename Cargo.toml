@@ -8,8 +8,8 @@ readme = "README.md"
 keywords = ["1337patch", "library", "parser"]
 categories = ["parser-implementations", "data-structures", "encoding"]
 publish = true
-version = "0.2.1"
+version = "0.2.2"
 edition = "2021"
 
 [dev-dependencies]
-tempfile = "3.7.1"
+tempfile = "3.8"

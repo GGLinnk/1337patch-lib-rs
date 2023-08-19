@@ -276,8 +276,6 @@ impl F1337Patch {
         for result in bufreader.lines() {
             let line = result?;
 
-            println!("{}", &line);
-
             Self::check_patch_line_format(&line)?;
             f1337patch.patches.push(Self::get_hex_patch_from_line(&line)?);
         }
