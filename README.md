@@ -8,7 +8,7 @@ use std::fs::File;
 
 fn main() {
     let mut patchfile = File::open("test.1337.txt").unwrap();
-    let f1337 = F1337Patch::new(&mut patchfile).unwrap();
+    let f1337 = F1337Patch::from_patchfile(&mut patchfile).unwrap();
 
     println!("{}", f1337.target_filename);
     for patch in f1337.patches {
